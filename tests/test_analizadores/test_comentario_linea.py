@@ -76,4 +76,33 @@ class TestComentarioLineaAFD:
         esperado = '// comentario'
         assert valido is True
         assert lexema == esperado
-        assert consumidos == len(esperado) 
+        assert consumidos == len(esperado)
+
+    def test_comentario_linea_unicode(self, afd):
+        texto = '// Comentario con ñ, á, ü, 漢字, 😀'
+        valido, lexema, consumidos = afd.analizar(texto, 0)
+        assert valido is True
+        assert lexema == texto
+        assert consumidos == len(lexema)
+
+    def test_comentario_linea_escape(self, afd):
+        texto = '// Comentario con escape: \\nNueva línea no incluida'
+        valido, lexema, consumidos = afd.analizar(texto, 0)
+        esperado = '// Comentario con escape: \\nNueva línea no incluida'
+        assert valido is True
+        assert lexema == esperado
+        assert consumidos == len(esperado)
+
+    def test_comentario_linea_todo(self, afd):
+        texto = '// TODO: implementar función principal'
+        valido, lexema, consumidos = afd.analizar(texto, 0)
+        assert valido is True
+        assert lexema == texto
+        assert consumidos == len(lexema)
+
+    def test_comentario_linea_ts_ignore(self, afd):
+        texto = '// @ts-ignore'
+        valido, lexema, consumidos = afd.analizar(texto, 0)
+        assert valido is True
+        assert lexema == texto
+        assert consumidos == len(lexema) 

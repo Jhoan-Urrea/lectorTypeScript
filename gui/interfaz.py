@@ -6,45 +6,58 @@ import os
 # Añadir la raíz del proyecto al path para importaciones
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from analizadores.identificador import IdentificadorAFD
-from lexer import AnalizadorLexico
+from analizadores.lexer import AnalizadorLexico
 from tokens import Categoria
 
-class InterfazLexer:
+class InterfazLexica:
     def __init__(self, root):
         self.root = root
-        self.root.title("Analizador Léxico - JavaScript")
-        self.root.geometry("900x700")  # Ajustar tamaño para más espacio
+        self.root.title("Analizador Léxico - TypeScript")
+        self.root.geometry("1200x800")  # Ventana más grande
         
         # Definir colores para categorías de tokens
         self.colores_categoria = {
-            Categoria.PALABRA_RESERVADA: "blue",
             Categoria.IDENTIFICADOR: "black",
-            Categoria.NUMERO_NATURAL: "dark green",
-            Categoria.NUMERO_REAL: "green",
-            Categoria.CADENA: "purple",
-            Categoria.COMENTARIO_LINEA: "gray",
-            Categoria.COMENTARIO_BLOQUE: "gray",
-            Categoria.OPERADOR_ARITMETICO: "orange red",
-            Categoria.OPERADOR_COMPARACION: "orange red",
-            Categoria.OPERADOR_LOGICO: "orange red",
-            Categoria.OPERADOR_ASIGNACION: "orange red",
+            Categoria.NUMERO_NATURAL: "blue",
+            Categoria.NUMERO_REAL: "blue",
+            Categoria.CADENA: "green",
+            Categoria.PALABRA_RESERVADA: "purple",
+            Categoria.TIPO_PRIMITIVO: "dark violet",
+            Categoria.TIPO_INTERFACE: "dark violet",
+            Categoria.TIPO_TYPE: "dark violet",
+            Categoria.TIPO_ENUM: "dark violet",
+            Categoria.TIPO_KEYOF: "dark violet",
+            Categoria.TIPO_INFER: "dark violet",
+            Categoria.TIPO_UNION: "dark violet",
+            Categoria.TIPO_INTERSECTION: "dark violet",
+            Categoria.TIPO_GENERIC: "dark violet",
+            Categoria.TIPO_TEMPLATE: "dark violet",
+            Categoria.OPERADOR_ARITMETICO: "orange",
+            Categoria.OPERADOR_COMPARACION: "orange",
+            Categoria.OPERADOR_LOGICO: "orange",
+            Categoria.OPERADOR_ASIGNACION: "orange",
             Categoria.OPERADOR_INCREMENTO: "orange red",
             Categoria.OPERADOR_DECREMENTO: "orange red",
             Categoria.OPERADOR_ACCESO: "dark orange",
-            Categoria.PARENTESIS_APERTURA: "dark cyan",
-            Categoria.PARENTESIS_CIERRE: "dark cyan",
-            Categoria.LLAVE_APERTURA: "dark cyan",
-            Categoria.LLAVE_CIERRE: "dark cyan",
-            Categoria.CORCHETE_APERTURA: "dark slate gray",
-            Categoria.CORCHETE_CIERRE: "dark slate gray",
-            Categoria.DOS_PUNTOS: "firebrick",
-            Categoria.SIGNO_INTERROGACION: "purple4",
-            Categoria.OPERADOR_OPTIONAL_CHAINING: "orchid",
-            Categoria.OPERADOR_NULISH_COALESCING: "orchid",
-            Categoria.TERMINAL: "magenta",
-            Categoria.SEPARADOR: "magenta",
-            # Categoria.ERROR se maneja en el panel de errores, no necesita color aquí
+            Categoria.OPERADOR_TYPESCRIPT: "teal",
+            Categoria.OPERADOR_UNION: "teal",
+            Categoria.OPERADOR_INTERSECTION: "teal",
+            Categoria.OPERADOR_OPTIONAL: "teal",
+            Categoria.OPERADOR_NON_NULL: "teal",
+            Categoria.PARENTESIS_IZQ: "dark cyan",
+            Categoria.PARENTESIS_DER: "dark cyan",
+            Categoria.LLAVE_IZQ: "dark cyan",
+            Categoria.LLAVE_DER: "dark cyan",
+            Categoria.CORCHETE_IZQ: "dark cyan",
+            Categoria.CORCHETE_DER: "dark cyan",
+            Categoria.PUNTO_Y_COMA: "brown",
+            Categoria.COMA: "brown",
+            Categoria.PUNTO: "brown",
+            Categoria.MENOR_QUE: "dark cyan",
+            Categoria.MAYOR_QUE: "dark cyan",
+            Categoria.COMENTARIO_LINEA: "gray",
+            Categoria.COMENTARIO_BLOQUE: "gray",
+            Categoria.EOF: "black"
         }
         
         # Configuración de la interfaz
@@ -55,54 +68,82 @@ class InterfazLexer:
         
     def configure_ui(self):
         """Configura todos los elementos de la interfaz gráfica"""
+        # Frame principal
         main_frame = ttk.Frame(self.root)
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         # Panel izquierdo para el editor
-        left_frame = ttk.LabelFrame(main_frame, text="Código JavaScript")
+        left_frame = ttk.LabelFrame(main_frame, text="Código TypeScript")
         left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
         
-        self.editor = scrolledtext.ScrolledText(left_frame, wrap=tk.WORD, width=50, height=30)
+        # Editor con fuente monoespaciada
+        self.editor = scrolledtext.ScrolledText(
+            left_frame,
+            wrap=tk.NONE,  # Desactivar wrap para mejor visualización de código
+            width=50,
+            height=30,
+            font=('Consolas', 10)  # Fuente monoespaciada
+        )
         self.editor.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
-        # Panel derecho para resultados (tokens y errores)
-        right_frame = ttk.Frame(main_frame) # Quitar LabelFrame para mejor distribución interna
+        # Panel derecho para resultados
+        right_frame = ttk.Frame(main_frame)
         right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
         
         # Botones de acción
         btn_frame = ttk.Frame(right_frame)
-        btn_frame.pack(fill=tk.X, pady=(0,5)) # pady inferior para separar de la tabla
+        btn_frame.pack(fill=tk.X, pady=(0,5))
         
-        self.btn_analizar = ttk.Button(btn_frame, text="Analizar Código", command=self.analizar_codigo)
+        self.btn_analizar = ttk.Button(
+            btn_frame,
+            text="Analizar Código",
+            command=self.analizar_codigo
+        )
         self.btn_analizar.pack(side=tk.LEFT, padx=(0,5))
         
-        self.btn_limpiar = ttk.Button(btn_frame, text="Limpiar", command=self.limpiar)
+        self.btn_limpiar = ttk.Button(
+            btn_frame,
+            text="Limpiar",
+            command=self.limpiar
+        )
         self.btn_limpiar.pack(side=tk.LEFT)
         
         # Panel para la tabla de Tokens
         tokens_frame = ttk.LabelFrame(right_frame, text="Tokens Identificados")
         tokens_frame.pack(fill=tk.BOTH, expand=True, pady=(5,5))
 
+        # Configurar tabla de tokens
         columns = ("lexema", "categoria", "fila", "columna")
-        self.tabla_tokens = ttk.Treeview(tokens_frame, columns=columns, show="headings")
+        self.tabla_tokens = ttk.Treeview(
+            tokens_frame,
+            columns=columns,
+            show="headings",
+            selectmode="browse"
+        )
         
+        # Configurar encabezados
         self.tabla_tokens.heading("lexema", text="Lexema")
         self.tabla_tokens.heading("categoria", text="Categoría")
         self.tabla_tokens.heading("fila", text="Fila")
         self.tabla_tokens.heading("columna", text="Columna")
         
-        self.tabla_tokens.column("lexema", width=150, anchor=tk.W)
+        # Configurar columnas
+        self.tabla_tokens.column("lexema", width=200, anchor=tk.W)
         self.tabla_tokens.column("categoria", width=150, anchor=tk.W)
         self.tabla_tokens.column("fila", width=50, anchor=tk.CENTER)
         self.tabla_tokens.column("columna", width=50, anchor=tk.CENTER)
         
         # Configurar tags para colores
         for categoria, color in self.colores_categoria.items():
-            # Usamos el nombre simple de la categoría como tag para simplificar
-            tag_name = categoria.split('.')[-1] if '.' in categoria else categoria
+            tag_name = categoria.name
             self.tabla_tokens.tag_configure(tag_name, foreground=color)
         
-        scrollbar_tokens = ttk.Scrollbar(tokens_frame, orient=tk.VERTICAL, command=self.tabla_tokens.yview)
+        # Scrollbar para la tabla
+        scrollbar_tokens = ttk.Scrollbar(
+            tokens_frame,
+            orient=tk.VERTICAL,
+            command=self.tabla_tokens.yview
+        )
         self.tabla_tokens.configure(yscroll=scrollbar_tokens.set)
         
         self.tabla_tokens.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -110,10 +151,16 @@ class InterfazLexer:
 
         # Panel para Errores Léxicos
         errores_frame = ttk.LabelFrame(right_frame, text="Errores Léxicos")
-        # Ajustar altura relativa para el panel de errores, ej. 1/3 de la tabla de tokens
-        errores_frame.pack(fill=tk.BOTH, expand=True, pady=(5,0), ipady=5) 
+        errores_frame.pack(fill=tk.BOTH, expand=True, pady=(5,0), ipady=5)
         
-        self.texto_errores = scrolledtext.ScrolledText(errores_frame, wrap=tk.WORD, width=40, height=5, state=tk.DISABLED)
+        self.texto_errores = scrolledtext.ScrolledText(
+            errores_frame,
+            wrap=tk.WORD,
+            width=40,
+            height=5,
+            state=tk.DISABLED,
+            font=('Consolas', 9)
+        )
         self.texto_errores.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
              
     def analizar_codigo(self):
@@ -125,61 +172,64 @@ class InterfazLexer:
             messagebox.showinfo("Aviso", "Por favor ingresa código para analizar.")
             return
             
-        tokens, errores = self.analizador.analizar(codigo)
-        
-        # Mostrar tokens en la tabla
-        for token in tokens:
-            categoria_completa = token.categoria # Guardamos la original por si acaso
-            categoria_simple = categoria_completa.split('.')[-1] if '.' in categoria_completa else categoria_completa
+        try:
+            tokens, errores = self.analizador.analizar(codigo)
             
-            # Determinar el tag para el color
-            # El tag debe ser el nombre simple de la categoría que usamos al configurar
-            tag_aplicar = categoria_simple 
+            # Mostrar tokens en la tabla
+            self.mostrar_tokens(tokens)
             
-            self.tabla_tokens.insert("", "end", values=(
-                token.lexema, 
-                categoria_simple,
-                token.fila, 
-                token.columna
-            ), tags=(tag_aplicar,))
-        
-        # Mostrar errores en el panel de errores
-        self.texto_errores.config(state=tk.NORMAL)
-        self.texto_errores.delete("1.0", tk.END)
-        if errores:
-            for i, error in enumerate(errores, 1):
-                mensaje_error = f"{i}. Error: Carácter '{error.lexema}' no reconocido en Fila {error.fila}, Columna {error.columna}\n"
-                self.texto_errores.insert(tk.END, mensaje_error)
-            messagebox.showwarning(
-                "Errores Léxicos Encontrados", 
-                f"Se encontraron {len(errores)} errores léxicos. Revise el panel de errores."
+            # Mostrar errores en el panel de errores
+            self.texto_errores.config(state=tk.NORMAL)
+            self.texto_errores.delete("1.0", tk.END)
+            
+            if errores:
+                for i, error in enumerate(errores, 1):
+                    mensaje_error = f"{i}. Error: Carácter '{error.lexema}' no reconocido en Fila {error.fila}, Columna {error.columna}\n"
+                    self.texto_errores.insert(tk.END, mensaje_error)
+                messagebox.showwarning(
+                    "Errores Léxicos Encontrados", 
+                    f"Se encontraron {len(errores)} errores léxicos. Revise el panel de errores."
+                )
+            else:
+                self.texto_errores.insert(tk.END, "No se encontraron errores léxicos.\n")
+                
+        except Exception as e:
+            messagebox.showerror(
+                "Error",
+                f"Error al analizar el código: {str(e)}"
             )
-        else:
-            self.texto_errores.insert(tk.END, "No se encontraron errores léxicos.\n")
-        self.texto_errores.config(state=tk.DISABLED)
+        finally:
+            self.texto_errores.config(state=tk.DISABLED)
     
-    def limpiar_tabla_tokens(self):
-        """Limpia la tabla de tokens"""
-        for item in self.tabla_tokens.get_children():
-            self.tabla_tokens.delete(item)
+    def mostrar_tokens(self, tokens):
+        """Muestra los tokens en la tabla con sus colores correspondientes"""
+        self.tabla_tokens.delete(*self.tabla_tokens.get_children())
+        for token in tokens:
+            self.tabla_tokens.insert(
+                "",
+                "end",
+                values=(
+                    token.lexema,
+                    token.categoria.name,
+                    token.fila,
+                    token.columna
+                ),
+                tags=(token.categoria.name,)
+            )
 
-    def limpiar_panel_errores(self):
-        """Limpia el panel de errores"""
+    def limpiar_resultados(self):
+        """Limpia la tabla de tokens y el panel de errores"""
+        self.tabla_tokens.delete(*self.tabla_tokens.get_children())
         self.texto_errores.config(state=tk.NORMAL)
         self.texto_errores.delete("1.0", tk.END)
         self.texto_errores.config(state=tk.DISABLED)
-            
-    def limpiar_resultados(self):
-        self.limpiar_tabla_tokens()
-        self.limpiar_panel_errores()
 
     def limpiar(self):
-        """Limpia editor y todos los resultados"""
+        """Limpia el editor y todos los resultados"""
         self.editor.delete("1.0", tk.END)
         self.limpiar_resultados()
 
 if __name__ == "__main__":
     root = tk.Tk()
-    # Renombrar la clase de la interfaz si es necesario, ej. InterfazLexer
-    app = InterfazLexer(root) 
+    app = InterfazLexica(root) 
     root.mainloop()

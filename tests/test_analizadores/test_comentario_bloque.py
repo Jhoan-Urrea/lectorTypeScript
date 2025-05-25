@@ -135,4 +135,47 @@ class TestComentarioBloqueAFD:
         valido, lexema, consumidos = afd.analizar(texto, 0)
         assert valido is True
         assert lexema == texto
+        assert consumidos == len(lexema)
+
+    def test_comentario_typescript_interface(self, afd):
+        texto = '''/**
+ * Interfaz que define la estructura de un usuario
+ * @interface Usuario
+ */'''
+        valido, lexema, consumidos = afd.analizar(texto, 0)
+        assert valido is True
+        assert lexema == texto
+        assert consumidos == len(lexema)
+
+    def test_comentario_typescript_generic(self, afd):
+        texto = '''/**
+ * Función genérica que procesa un array de elementos
+ * @template T - Tipo de los elementos del array
+ * @param {T[]} items - Array de elementos a procesar
+ * @returns {T[]} - Array procesado
+ */'''
+        valido, lexema, consumidos = afd.analizar(texto, 0)
+        assert valido is True
+        assert lexema == texto
+        assert consumidos == len(lexema)
+
+    def test_comentario_typescript_enum(self, afd):
+        texto = '''/**
+ * Enumeración de estados posibles
+ * @enum {number}
+ */'''
+        valido, lexema, consumidos = afd.analizar(texto, 0)
+        assert valido is True
+        assert lexema == texto
+        assert consumidos == len(lexema)
+
+    def test_comentario_typescript_decorator(self, afd):
+        texto = '''/**
+ * Decorador que registra el método en el sistema de logging
+ * @decorator
+ * @param {string} [nivel='info'] - Nivel de logging
+ */'''
+        valido, lexema, consumidos = afd.analizar(texto, 0)
+        assert valido is True
+        assert lexema == texto
         assert consumidos == len(lexema) 

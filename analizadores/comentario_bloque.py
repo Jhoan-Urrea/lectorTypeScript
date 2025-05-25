@@ -6,6 +6,7 @@ class ComentarioBloqueAFD:
         """
         Analiza si a partir de la posición inicial hay un comentario de bloque.
         Un comentario de bloque comienza con /* y termina con */.
+        Soporta comentarios de documentación TypeScript/JSDoc.
         
         Args:
             texto: Cadena de texto a analizar
@@ -50,6 +51,7 @@ class ComentarioBloqueAFD:
                     lexema += c
                     pos += 1
                 else:
+                    # Aceptar cualquier carácter dentro del comentario
                     lexema += c
                     pos += 1
                     
@@ -84,7 +86,9 @@ if __name__ == "__main__":
         "/* Comentario\nmultilinea\n*/",
         "/* Comentario sin cerrar",
         "//Esto es otro tipo",
-        ""
+        "",
+        "/** @param {string} nombre - Descripción del parámetro */",
+        "/* @typescript */"
     ]
     
     for prueba in pruebas:

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Analizador léxico principal para JavaScript.
+Analizador léxico principal para TypeScript.
 Orquesta todos los autómatas para analizar el código fuente.
 """
 
-from tokens import Token, Categoria
+from tokens import Token, Categoria, PALABRAS_RESERVADAS
 from analizadores.identificador import IdentificadorAFD
 from analizadores.numero_natural import NumeroNaturalAFD
 from analizadores.palabra_reservada import PalabraReservadaAFD
@@ -93,12 +93,12 @@ class AnalizadorLexico:
                 if categoria_simbolo:
                     mejor_categoria = categoria_simbolo
             
-            # Probar palabra reservada
-            valido, lexema, consumidos = self.analizadores["palabra_reservada"].analizar(codigo, pos)
+            # Probar palabra reservada o tipo
+            valido, lexema, consumidos, categoria = self.analizadores["palabra_reservada"].analizar(codigo, pos)
             if valido and consumidos > mejor_consumo:
                 mejor_consumo = consumidos
                 mejor_lexema = lexema
-                mejor_categoria = Categoria.PALABRA_RESERVADA
+                mejor_categoria = categoria
             
             # Probar número real (antes que natural para evitar confusión)
             valido, lexema, consumidos = self.analizadores["numero_real"].analizar(codigo, pos)
@@ -153,23 +153,30 @@ if __name__ == "__main__":
     analizador = AnalizadorLexico()
     
     codigo_prueba = """
-    // Declaración de variables
-    var contador = 123;
-    
-    /* Definición de constantes
-       en varias líneas */
-    const PI = 3.14159;
-    
-    // Ejemplos de números reales
-    let temperatura = 10.5e-3;
-    let notacion = 1e10;
-    let decimal = .5;
-    
-    // Condicional simple
-    if (contador > 0) {
-        // Imprimir un mensaje
-        console.log("Positivo");  // Cadena de texto
+    // Declaración de tipos en TypeScript
+    interface Usuario {
+        nombre: string;
+        edad: number;
+        activo: boolean;
     }
+    
+    // Declaración de variables con tipos
+    let contador: number = 123;
+    const PI: number = 3.14159;
+    
+    // Ejemplo de tipos genéricos
+    function procesar<T>(valor: T): T {
+        return valor;
+    }
+    
+    // Ejemplo de tipos union
+    type ID = string | number;
+    
+    // Ejemplo de tipos intersection
+    type Empleado = Usuario & {
+        departamento: string;
+        salario: number;
+    };
     """
     
     tokens, errores = analizador.analizar(codigo_prueba)

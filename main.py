@@ -6,12 +6,12 @@ Este archivo inicia la interfaz gráfica.
 """
 
 import tkinter as tk
-from gui.interfaz import InterfazLexer
+from gui.interfaz import InterfazLexica
 
 def main():
     """Función principal que inicia la aplicación."""
     root = tk.Tk()
-    app = InterfazLexer(root)
+    app = InterfazLexica(root)
     root.mainloop()
 
 if __name__ == "__main__":

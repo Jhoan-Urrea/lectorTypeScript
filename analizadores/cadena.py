@@ -1,108 +1,141 @@
+import sys
+import os
+
+# Añadir la raíz del proyecto al path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from tokens import Categoria
+
 class CadenaAFD:
     def __init__(self):
-        self.comilla_apertura = None # Para almacenar el tipo de comilla que abrió la cadena
+        pass
         
     def analizar(self, texto, pos_inicial):
         """
-        Analiza si a partir de la posición inicial hay una cadena de texto.
-        Una cadena comienza con " o ' o ` y termina con la misma comilla, 
-        y puede contener secuencias de escape \.
+        Verifica si a partir de la posición inicial hay una cadena válida.
+        Una cadena en TypeScript puede ser:
+        - Comillas simples: 'texto'
+        - Comillas dobles: "texto"
+        - Template literals: `texto`
         
         Args:
             texto: Cadena de texto a analizar
             pos_inicial: Posición desde donde comenzar el análisis
             
         Returns:
-            Tupla de (es_valido, lexema, caracteres_consumidos)
+            Tupla de (es_valido, lexema, caracteres_consumidos, categoria)
         """
-        # Estados del autómata:
-        # 0: Inicial
-        # 1: Después de la comilla de apertura
-        # 2: Después de una barra invertida (escape)
-        # 3: Después de la comilla de cierre (estado final)
-        
-        estado = 0
-        lexema = ''
-        pos = pos_inicial
-        self.comilla_apertura = None # Reiniciar por si se usa múltiples veces
-        
-        while pos < len(texto):
-            c = texto[pos]
+        if pos_inicial >= len(texto):
+            return False, '', 0, None
             
-            if estado == 0:  # Estado inicial
-                if c == '"' or c == "'" or c == "`": # Añadido el acento grave
-                    self.comilla_apertura = c # Guardar la comilla de apertura
-                    estado = 1
-                    lexema += c
-                    pos += 1
-                else:
-                    break  # No empieza con comilla
-                    
-            elif estado == 1:  # Dentro de la cadena
-                if c == self.comilla_apertura: # Usar la comilla de apertura guardada
-                    estado = 3  # Comilla de cierre, terminó la cadena
-                    lexema += c
-                    pos += 1
-                    break  # Terminar análisis
-                elif c == '\\':
-                    estado = 2  # Encontramos un escape
-                    lexema += c
-                    pos += 1
-                else:
-                    # Permitir saltos de línea dentro de las cadenas (especialmente para template literals)
-                    lexema += c  # Cualquier otro carácter es parte de la cadena
-                    pos += 1
-                    
-            elif estado == 2:  # Después de escape
-                # Si el escape es la propia comilla de apertura, una barra invertida,
-                # o caracteres como n, t, etc., se añade tal cual.
-                # No se interpretan aquí, solo se consumen como dos caracteres (\ y el siguiente).
-                lexema += c  # El carácter después del escape siempre se toma literal
-                estado = 1  # Volver al estado dentro de la cadena
-                pos += 1
+        # Verificar el tipo de comilla
+        comilla = texto[pos_inicial]
+        if comilla not in ['"', "'", '`']:
+            return False, '', 0, None
+            
+        # Formar el lexema
+        lexema = comilla
+        pos_actual = pos_inicial + 1
+        escape = False
         
-        # Verificar si terminamos con una cadena válida
-        if estado == 3:
-            return True, lexema, len(lexema)
-        else:
-            # Si no se cerró la cadena, y se inició una, es un error no consumido por este AFD
-            # Devolvemos False para que el lexer principal lo marque como error si es necesario
-            return False, '', 0
+        # Continuar mientras no encontremos la comilla de cierre
+        while pos_actual < len(texto):
+            caracter = texto[pos_actual]
+            
+            # Si encontramos la comilla de cierre y no estamos escapando
+            if caracter == comilla and not escape:
+                lexema += caracter
+                pos_actual += 1
+                return True, lexema, len(lexema), Categoria.CADENA
+                
+            # Si encontramos un salto de línea y no estamos escapando
+            if caracter == '\n' and not escape and comilla != '`':
+                return False, '', 0, None
+                
+            # Si encontramos un escape
+            if caracter == '\\' and not escape:
+                escape = True
+                lexema += caracter
+                pos_actual += 1
+                continue
+                
+            # Si estamos escapando, permitir cualquier carácter
+            if escape:
+                escape = False
+                lexema += caracter
+                pos_actual += 1
+                continue
+                
+            # Carácter normal
+            lexema += caracter
+            pos_actual += 1
+            
+        # Si llegamos aquí, no encontramos la comilla de cierre
+        return False, '', 0, None
 
 if __name__ == "__main__":
     # Pruebas
     afd = CadenaAFD()
     
-    pruebas = [
-        '"Hola mundo"',          # Comillas dobles
-        "'Hola mundo'",          # Comillas simples
-        "`Hola mundo`",          # Template literal simple
-        '"Cadena con \\"escape\\""', # Escape de comilla doble
-        "'Cadena con \\'escape\\''", # Escape de comilla simple
-        "`Cadena con \\`escape\\``", # Escape de acento grave
-        '"Cadena sin cerrar',    # Prueba de cadena no cerrada,
-        "'Cadena sin cerrar",    # Prueba de cadena no cerrada,
-        "`Cadena sin cerrar",    # Prueba de cadena no cerrada,
-        'No es cadena',
-        '"Cadena con\\nSalto"',    # JS string: "Cadena con\nSalto"
-        "'Cadena con\\nSalto'",    # JS string: 'Cadena con\nSalto'
-        "`Cadena con\\nSalto`",     # JS string: `Cadena con\nSalto`
-        """`Cadena con
-Salto literal`""",        # JS template string with a literal newline
-        '"Cadena\\tTabulador"',
-        "'Cadena\\tTabulador'",
-        "`Cadena con ${expresion} interpolada`", 
-        '"Cadena\\\\Barra"',  # JS string: "Cadena\\Barra"
-        "'Cadena\\\\Barra'",  # JS string: 'Cadena\\Barra'
-        '''"Mala 'combinación"''', # Unmatched quote type test
-        ''''Mala "combinación"''', # Unmatched quote type test
-        "`Mala \"comilla doble\" y 'comilla simple'`", 
-        '""', # Empty double quoted string
-        "''", # Empty single quoted string
-        "``", # Empty template string
-        ''    # Empty input string for testing
-    ]
+    print("--- Pruebas del main de CadenaAFD ---")
+    pruebas = {
+        # Cadenas con comillas dobles
+        '"Hola"': (True, '"Hola"', 6, Categoria.CADENA),
+        '"Hola mundo"': (True, '"Hola mundo"', 12, Categoria.CADENA),
+        '"Hola\\nMundo"': (True, '"Hola\\nMundo"', 13, Categoria.CADENA),
+        '"Hola\\"Mundo"': (True, '"Hola\\"Mundo"', 13, Categoria.CADENA),
+        '"Hola\\\'Mundo"': (True, '"Hola\\\'Mundo"', 13, Categoria.CADENA),
+        '"Hola\\`Mundo"': (True, '"Hola\\`Mundo"', 13, Categoria.CADENA),
+        '"Hola\\tMundo"': (True, '"Hola\\tMundo"', 13, Categoria.CADENA),
+        '"Hola\\rMundo"': (True, '"Hola\\rMundo"', 13, Categoria.CADENA),
+        '"Hola\\bMundo"': (True, '"Hola\\bMundo"', 13, Categoria.CADENA),
+        '"Hola\\fMundo"': (True, '"Hola\\fMundo"', 13, Categoria.CADENA),
+        '"Hola\\vMundo"': (True, '"Hola\\vMundo"', 13, Categoria.CADENA),
+        '"Hola\\0Mundo"': (True, '"Hola\\0Mundo"', 13, Categoria.CADENA),
+        '"Hola\\x41Mundo"': (True, '"Hola\\x41Mundo"', 14, Categoria.CADENA),
+        '"Hola\\u0041Mundo"': (True, '"Hola\\u0041Mundo"', 16, Categoria.CADENA),
+        '"Hola\\u{41}Mundo"': (True, '"Hola\\u{41}Mundo"', 15, Categoria.CADENA),
+        
+        # Cadenas con comillas simples
+        "'Hola'": (True, "'Hola'", 6, Categoria.CADENA),
+        "'Hola mundo'": (True, "'Hola mundo'", 12, Categoria.CADENA),
+        "'Hola\\nMundo'": (True, "'Hola\\nMundo'", 13, Categoria.CADENA),
+        "'Hola\\\"Mundo'": (True, "'Hola\\\"Mundo'", 13, Categoria.CADENA),
+        "'Hola\\'Mundo'": (True, "'Hola\\'Mundo'", 13, Categoria.CADENA),
+        "'Hola\\`Mundo'": (True, "'Hola\\`Mundo'", 13, Categoria.CADENA),
+        
+        # Template literals
+        "`Hola`": (True, "`Hola`", 6, Categoria.CADENA),
+        "`Hola mundo`": (True, "`Hola mundo`", 12, Categoria.CADENA),
+        "`Hola\\nMundo`": (True, "`Hola\\nMundo`", 13, Categoria.CADENA),
+        "`Hola\\\"Mundo`": (True, "`Hola\\\"Mundo`", 13, Categoria.CADENA),
+        "`Hola\\'Mundo`": (True, "`Hola\\'Mundo`", 13, Categoria.CADENA),
+        "`Hola\\`Mundo`": (True, "`Hola\\`Mundo`", 13, Categoria.CADENA),
+        "`Hola ${nombre}`": (True, "`Hola ${nombre}`", 15, Categoria.CADENA),
+        "`Hola ${nombre + ' ' + apellido}`": (True, "`Hola ${nombre + ' ' + apellido}`", 31, Categoria.CADENA),
+        
+        # Casos de error
+        "": (False, "", 0, None),  # Vacío
+        "Hola": (False, "", 0, None),  # No comienza con comilla
+        '"Hola': (False, "", 0, None),  # No tiene comilla de cierre
+        "'Hola": (False, "", 0, None),  # No tiene comilla de cierre
+        "`Hola": (False, "", 0, None),  # No tiene comilla de cierre
+        '"Hola\nMundo"': (False, "", 0, None),  # Salto de línea no escapado
+        "'Hola\nMundo'": (False, "", 0, None),  # Salto de línea no escapado
+        '"Hola\\"': (False, "", 0, None),  # Escape al final
+        "'Hola\\'": (False, "", 0, None),  # Escape al final
+        "`Hola\\`": (False, "", 0, None),  # Escape al final
+    }
     
-    for prueba in pruebas:
-        valido, lexema, consumidos = afd.analizar(prueba, 0)
-        print(f"Entrada: {repr(prueba)} -> Válido: {valido}, Lexema: {repr(lexema)}, Caracteres consumidos: {consumidos}") 
+    for prueba, esperado in pruebas.items():
+        valido, lexema, consumidos, categoria = afd.analizar(prueba, 0)
+        resultado = (valido, lexema, consumidos, categoria)
+        print(f"Entrada: '{prueba}' -> Resultado: {resultado}, Esperado: {esperado} -> Correcto: {resultado == esperado}")
+    
+    print("--- Prueba específica para 'Hola\"Mundo' en pos 4 ---")
+    texto_especifico = 'Hola"Mundo'
+    valido, lexema, consumidos, categoria = afd.analizar(texto_especifico, 4) # Analizar "Mundo"
+    resultado_esp = (valido, lexema, consumidos, categoria)
+    # Esperado: (True, '"Mundo"', 6, Categoria.CADENA)
+    esperado_esp = (True, '"Mundo"', 6, Categoria.CADENA)
+    print(f"Entrada: '{texto_especifico}' (desde pos 4) -> Resultado: {resultado_esp}, Esperado: {esperado_esp} -> Correcto: {resultado_esp == esperado_esp}") 

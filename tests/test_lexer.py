@@ -5,7 +5,7 @@ import os
 # Añadir la raíz del proyecto al path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from lexer import AnalizadorLexico
+from analizadores.lexer import AnalizadorLexico
 from tokens import Token, Categoria
 
 @pytest.fixture
@@ -20,7 +20,7 @@ class TestAnalizadorLexico:
             Token("x", Categoria.IDENTIFICADOR, 1, 5),
             Token("=", Categoria.OPERADOR_ASIGNACION, 1, 7),
             Token("10", Categoria.NUMERO_NATURAL, 1, 9),
-            Token(";", Categoria.TERMINAL, 1, 11)
+            Token(";", Categoria.PUNTO_Y_COMA, 1, 11)
         ]
         
         tokens_obtenidos, errores = lexer.analizar(codigo)
@@ -59,17 +59,17 @@ function calcularTotal(precio, cantidad) {
             Token("function", Categoria.PALABRA_RESERVADA, 2, 1),
             Token("calcularTo", Categoria.IDENTIFICADOR, 2, 10),
             Token("tal", Categoria.IDENTIFICADOR, 2, 20),
-            Token("(", Categoria.PARENTESIS_APERTURA, 2, 23),
+            Token("(", Categoria.PARENTESIS_IZQ, 2, 23),
             Token("precio", Categoria.IDENTIFICADOR, 2, 24),
-            Token(",", Categoria.SEPARADOR, 2, 30),
+            Token(",", Categoria.COMA, 2, 30),
             Token("cantidad", Categoria.IDENTIFICADOR, 2, 32),
-            Token(")", Categoria.PARENTESIS_CIERRE, 2, 40),
-            Token("{", Categoria.LLAVE_APERTURA, 2, 42),
+            Token(")", Categoria.PARENTESIS_DER, 2, 40),
+            Token("{", Categoria.LLAVE_IZQ, 2, 42),
             Token("const", Categoria.PALABRA_RESERVADA, 3, 5),
             Token("IMPUESTO", Categoria.IDENTIFICADOR, 3, 11),
             Token("=", Categoria.OPERADOR_ASIGNACION, 3, 20),
             Token("0.15", Categoria.NUMERO_REAL, 3, 22),
-            Token(";", Categoria.TERMINAL, 3, 26),
+            Token(";", Categoria.PUNTO_Y_COMA, 3, 26),
             Token("// Impuesto fijo del 15%", Categoria.COMENTARIO_LINEA, 3, 28),
             Token("let", Categoria.PALABRA_RESERVADA, 4, 5),
             Token("subtotal", Categoria.IDENTIFICADOR, 4, 9),
@@ -77,7 +77,7 @@ function calcularTotal(precio, cantidad) {
             Token("precio", Categoria.IDENTIFICADOR, 4, 20),
             Token("*", Categoria.OPERADOR_ARITMETICO, 4, 27),
             Token("cantidad", Categoria.IDENTIFICADOR, 4, 29),
-            Token(";", Categoria.TERMINAL, 4, 37),
+            Token(";", Categoria.PUNTO_Y_COMA, 4, 37),
             Token("/* Calcular impuesto y total */", Categoria.COMENTARIO_BLOQUE, 5, 5),
             Token("let", Categoria.PALABRA_RESERVADA, 6, 5),
             Token("impuestoCa", Categoria.IDENTIFICADOR, 6, 9),
@@ -86,7 +86,7 @@ function calcularTotal(precio, cantidad) {
             Token("subtotal", Categoria.IDENTIFICADOR, 6, 29),
             Token("*", Categoria.OPERADOR_ARITMETICO, 6, 38),
             Token("IMPUESTO", Categoria.IDENTIFICADOR, 6, 40),
-            Token(";", Categoria.TERMINAL, 6, 48),
+            Token(";", Categoria.PUNTO_Y_COMA, 6, 48),
             Token("let", Categoria.PALABRA_RESERVADA, 7, 5),
             Token("totalFinal", Categoria.IDENTIFICADOR, 7, 9),
             Token("=", Categoria.OPERADOR_ASIGNACION, 7, 20),
@@ -94,26 +94,26 @@ function calcularTotal(precio, cantidad) {
             Token("+", Categoria.OPERADOR_ARITMETICO, 7, 31),
             Token("impuestoCa", Categoria.IDENTIFICADOR, 7, 33),
             Token("lculado", Categoria.IDENTIFICADOR, 7, 43),
-            Token(";", Categoria.TERMINAL, 7, 50),
+            Token(";", Categoria.PUNTO_Y_COMA, 7, 50),
             Token("if", Categoria.PALABRA_RESERVADA, 9, 5),
-            Token("(", Categoria.PARENTESIS_APERTURA, 9, 8),
+            Token("(", Categoria.PARENTESIS_IZQ, 9, 8),
             Token("totalFinal", Categoria.IDENTIFICADOR, 9, 9),
             Token(">", Categoria.OPERADOR_COMPARACION, 9, 20),
             Token("100.0", Categoria.NUMERO_REAL, 9, 22),
-            Token(")", Categoria.PARENTESIS_CIERRE, 9, 27),
-            Token("{", Categoria.LLAVE_APERTURA, 9, 29),
+            Token(")", Categoria.PARENTESIS_DER, 9, 27),
+            Token("{", Categoria.LLAVE_IZQ, 9, 29),
             Token("console", Categoria.IDENTIFICADOR, 10, 9),
             Token(".", Categoria.OPERADOR_ACCESO, 10, 16),
             Token("log", Categoria.IDENTIFICADOR, 10, 17),
-            Token("(", Categoria.PARENTESIS_APERTURA, 10, 20),
+            Token("(", Categoria.PARENTESIS_IZQ, 10, 20),
             Token("\"¡Compra grande!\"", Categoria.CADENA, 10, 21),
-            Token(")", Categoria.PARENTESIS_CIERRE, 10, 38),
-            Token(";", Categoria.TERMINAL, 10, 39),
-            Token("}", Categoria.LLAVE_CIERRE, 11, 5),
+            Token(")", Categoria.PARENTESIS_DER, 10, 38),
+            Token(";", Categoria.PUNTO_Y_COMA, 10, 39),
+            Token("}", Categoria.LLAVE_DER, 11, 5),
             Token("return", Categoria.PALABRA_RESERVADA, 12, 5),
             Token("totalFinal", Categoria.IDENTIFICADOR, 12, 12),
-            Token(";", Categoria.TERMINAL, 12, 22),
-            Token("}", Categoria.LLAVE_CIERRE, 13, 1)
+            Token(";", Categoria.PUNTO_Y_COMA, 12, 22),
+            Token("}", Categoria.LLAVE_DER, 13, 1)
         ]
 
         tokens_obtenidos, errores = lexer.analizar(codigo)
